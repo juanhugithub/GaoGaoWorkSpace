@@ -12,7 +12,12 @@ const settingsApi = vi.hoisted(() => ({
   verifyAppLockPassword: vi.fn(),
 }));
 
+const updaterApi = vi.hoisted(() => ({
+  checkForAppUpdate: vi.fn(),
+}));
+
 vi.mock("../lib/settings", () => settingsApi);
+vi.mock("../lib/updater", () => updaterApi);
 
 vi.mock("../components/dashboard/DashboardView", () => ({
   default: () => <div>Dashboard Workspace</div>,
@@ -35,6 +40,20 @@ vi.mock("../components/SettingsView", () => ({
 }));
 
 import App from "../App";
+
+function mockNavigationType(type) {
+  if (typeof window.performance.getEntriesByType === "function") {
+    vi.spyOn(window.performance, "getEntriesByType").mockImplementation((entryType) =>
+      entryType === "navigation" ? [{ type }] : [],
+    );
+    return;
+  }
+
+  Object.defineProperty(window.performance, "getEntriesByType", {
+    configurable: true,
+    value: vi.fn((entryType) => (entryType === "navigation" ? [{ type }] : [])),
+  });
+}
 
 beforeEach(() => {
   settingsApi.getAppSettings.mockResolvedValue({
@@ -60,6 +79,7 @@ beforeEach(() => {
     success: true,
     message: "验证通过",
   });
+  updaterApi.checkForAppUpdate.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -121,6 +141,39 @@ test("keeps quick lock disabled when lock protection is not fully configured", a
   await screen.findByText("Journal Workspace");
   expect(screen.queryByText("应用已锁定")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "立即锁定" })).toBeDisabled();
+});
+
+test("does not relock the app after a page refresh when it was unlocked before reload", async () => {
+  mockNavigationType("reload");
+  window.sessionStorage.setItem("personal-os.lock-state", "unlocked");
+
+  renderWithToast(<App />);
+
+  await screen.findByText("Journal Workspace");
+  expect(screen.getByRole("button", { name: "立即锁定" })).toBeEnabled();
+  expect(screen.queryByText("应用已锁定")).not.toBeInTheDocument();
+});
+
+test("notifies installed users when a newer update is available after startup", async () => {
+  const user = userEvent.setup();
+  updaterApi.checkForAppUpdate.mockResolvedValue({
+    currentVersion: "1.0.329",
+    version: "1.0.330",
+    close: vi.fn().mockResolvedValue(undefined),
+  });
+
+  renderWithToast(<App />);
+
+  await screen.findByText("应用已锁定");
+  await user.type(screen.getByPlaceholderText("输入锁定密码"), "1234");
+  await user.click(screen.getByRole("button", { name: "解锁进入" }));
+  await screen.findByText("Journal Workspace");
+
+  await waitFor(() => {
+    expect(updaterApi.checkForAppUpdate).toHaveBeenCalledTimes(1);
+  });
+  await screen.findByText("发现新版本 v1.0.330");
+  await screen.findByText("已安装用户可在“全局设置 > 高级维护”中下载并安装更新。");
 });
 
 test("locks the app when the quick lock shortcut is pressed", async () => {

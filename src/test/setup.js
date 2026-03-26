@@ -33,5 +33,6 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   document.body.dataset.shortcutRecording = "false";
 });

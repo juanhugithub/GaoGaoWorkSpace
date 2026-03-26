@@ -7,6 +7,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import process from "node:process";
+import { loadTauriSigningEnvironment } from "./lib/tauriSigningEnv.js";
 
 dotenv.config({ quiet: true });
 
@@ -568,7 +569,7 @@ async function main() {
     "TAURI_SIGNING_PRIVATE_KEY",
     "TAURI_UPDATER_PUBLIC_KEY",
   ]);
-  resolveSigningPrivateKey();
+  loadTauriSigningEnvironment(projectRoot);
 
   const packageJson = readJson(packageJsonPath);
   const currentVersion = String(packageJson.version || "").trim();

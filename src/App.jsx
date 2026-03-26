@@ -32,8 +32,13 @@ import {
   saveKeyboardShortcut,
   verifyAppLockPassword,
 } from "./lib/settings";
+import { checkForAppUpdate } from "./lib/updater";
 
 const ACTIVE_TAB_STORAGE_KEY = "personal-os.active-tab";
+const LOCK_STATE_STORAGE_KEY = "personal-os.lock-state";
+const LOCK_STATE_LOCKED = "locked";
+const LOCK_STATE_UNLOCKED = "unlocked";
+const UPDATE_NOTICE_STORAGE_KEY = "personal-os.notified-update-version";
 const VALID_TABS = ["workspace", "dashboard", "notes", "journal", "settings"];
 const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "scroll", "touchstart"];
 const TAB_ACTIONS = {
@@ -68,6 +73,97 @@ function getSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function getNavigationType() {
+  if (typeof window === "undefined" || typeof window.performance === "undefined") {
+    return "navigate";
+  }
+
+  if (typeof window.performance.getEntriesByType === "function") {
+    const navigationEntries = window.performance.getEntriesByType("navigation");
+    const navigationEntry = navigationEntries[0];
+    if (navigationEntry && typeof navigationEntry.type === "string") {
+      return navigationEntry.type;
+    }
+  }
+
+  if (window.performance.navigation && typeof window.performance.navigation.type === "number") {
+    return window.performance.navigation.type === 1 ? "reload" : "navigate";
+  }
+
+  return "navigate";
+}
+
+function getReloadLockState() {
+  if (typeof window === "undefined" || getNavigationType() !== "reload") {
+    return "";
+  }
+
+  try {
+    return window.sessionStorage.getItem(LOCK_STATE_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function persistLockState(isLocked) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      LOCK_STATE_STORAGE_KEY,
+      isLocked ? LOCK_STATE_LOCKED : LOCK_STATE_UNLOCKED,
+    );
+  } catch {}
+}
+
+function resolveInitialLockState(settings) {
+  if (!settings.appLockEnabled || !settings.hasAppLockPassword) {
+    return false;
+  }
+
+  const reloadLockState = getReloadLockState();
+  if (reloadLockState === LOCK_STATE_LOCKED) {
+    return true;
+  }
+  if (reloadLockState === LOCK_STATE_UNLOCKED) {
+    return false;
+  }
+
+  return true;
+}
+
+function formatVersion(version) {
+  if (!version) {
+    return "--";
+  }
+
+  return version.startsWith("v") ? version : `v${version}`;
+}
+
+function getNotifiedUpdateVersion() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    return window.localStorage.getItem(UPDATE_NOTICE_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function persistNotifiedUpdateVersion(version) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(UPDATE_NOTICE_STORAGE_KEY, version);
+  } catch {}
+}
+
 function applyAccentTheme(accentTheme) {
   const accent = ACCENT_THEMES[accentTheme] ?? ACCENT_THEMES["classic-blue"];
   const root = document.documentElement;
@@ -99,6 +195,7 @@ function App() {
   const appSettingsRef = useRef(DEFAULT_APP_SETTINGS);
   const keyboardShortcutsRef = useRef(normalizeKeyboardShortcuts());
   const settingsSaveTokenRef = useRef(0);
+  const hasCheckedStartupUpdateRef = useRef(false);
 
   const resolvedThemeMode = useMemo(() => {
     if (appSettings.themeMode === "system") {
@@ -135,6 +232,14 @@ function App() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!isSettingsReady) {
+      return;
+    }
+
+    persistLockState(isLocked);
+  }, [isLocked, isSettingsReady]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadAppState() {
@@ -155,7 +260,7 @@ function App() {
           tab: activeTabRef.current,
           label: TAB_LABELS[activeTabRef.current] ?? "当前界面",
         });
-        setIsLocked(settings.appLockEnabled && settings.hasAppLockPassword);
+        setIsLocked(resolveInitialLockState(settings));
       } catch (error) {
         console.error(error);
         if (!cancelled) {
@@ -258,6 +363,47 @@ function App() {
     dispatchShortcutEvent(pendingJournalShortcutAction);
     setPendingJournalShortcutAction("");
   }, [activeTab, isLocked, pendingJournalShortcutAction]);
+
+  useEffect(() => {
+    if (!isSettingsReady || isLocked || hasCheckedStartupUpdateRef.current) {
+      return;
+    }
+
+    hasCheckedStartupUpdateRef.current = true;
+    let cancelled = false;
+
+    async function checkStartupUpdate() {
+      try {
+        const update = await checkForAppUpdate();
+        if (cancelled || !update?.version) {
+          return;
+        }
+
+        if (getNotifiedUpdateVersion() === update.version) {
+          return;
+        }
+
+        persistNotifiedUpdateVersion(update.version);
+        showToast({
+          tone: "info",
+          title: `发现新版本 ${formatVersion(update.version)}`,
+          description: "已安装用户可在“全局设置 > 高级维护”中下载并安装更新。",
+          duration: 5200,
+        });
+        if (typeof update.close === "function") {
+          update.close().catch(() => {});
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    checkStartupUpdate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLocked, isSettingsReady, showToast]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {

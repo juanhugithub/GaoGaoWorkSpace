@@ -28,6 +28,7 @@ import {
   SHORTCUT_ACTIONS_BY_ID,
   THEME_MODE_OPTIONS,
 } from "../app/settings";
+import { BUILD_APP_VERSION } from "../app/version";
 import { useToast } from "./common/ToastProvider";
 import { openLogDirectory, vacuumDatabase } from "../lib/settings";
 import { checkForAppUpdate, getCurrentAppVersion } from "../lib/updater";
@@ -196,7 +197,7 @@ function SettingsView({
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isVacuuming, setIsVacuuming] = useState(false);
   const [isOpeningLogs, setIsOpeningLogs] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState("");
+  const [currentVersion, setCurrentVersion] = useState(() => BUILD_APP_VERSION);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isInstallingUpdate, setIsInstallingUpdate] = useState(false);
   const [availableUpdate, setAvailableUpdate] = useState(null);
@@ -307,8 +308,8 @@ function SettingsView({
           setCurrentVersion(version);
         }
       } catch (error) {
-        console.error(error);
-        if (!cancelled) {
+        if (!cancelled && !BUILD_APP_VERSION) {
+          console.error(error);
           showToast({
             tone: "error",
             title: "读取当前版本失败",
@@ -640,7 +641,7 @@ function SettingsView({
   return (
     <div className="flex-1 overflow-hidden">
       <div className="flex h-full gap-4">
-        <aside className="flex h-full w-[280px] shrink-0 flex-col rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
+        <aside className="flex h-full w-[280px] shrink-0 flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="px-2 pb-4">
             <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-gray-400">
               Global Settings
@@ -651,43 +652,45 @@ function SettingsView({
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
-            {SECTIONS.map((section) => {
-              const Icon = section.icon;
-              const isActive = section.id === activeSection;
+          <div className="min-h-0 flex-1 overflow-y-auto px-1">
+            <div className="flex flex-col gap-2">
+              {SECTIONS.map((section) => {
+                const Icon = section.icon;
+                const isActive = section.id === activeSection;
 
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => setActiveSection(section.id)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition-all ${
-                    isActive
-                      ? "border-blue-300 bg-blue-50 shadow-sm"
-                      : "border-transparent bg-white hover:border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-                        isActive ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Icon size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className={`text-sm font-bold ${isActive ? "text-blue-700" : "text-gray-900"}`}>
-                        {section.label}
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => setActiveSection(section.id)}
+                    className={`rounded-2xl border px-4 py-3 text-left transition-all ${
+                      isActive
+                        ? "border-blue-300 bg-blue-50 shadow-sm"
+                        : "border-transparent bg-white hover:border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                          isActive ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        <Icon size={18} />
                       </div>
-                      <div className="mt-1 text-xs text-gray-500">{section.description}</div>
+                      <div className="min-w-0">
+                        <div className={`text-sm font-bold ${isActive ? "text-blue-700" : "text-gray-900"}`}>
+                          {section.label}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">{section.description}</div>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="mt-auto px-2 pt-4">
+          <div className="mt-4 shrink-0 px-2 pt-4">
             <div className="rounded-2xl border border-gray-200 bg-[#FAFAFA] px-4 py-3 shadow-sm">
               <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">
                 Version

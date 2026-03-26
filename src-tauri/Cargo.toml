@@ -1,6 +1,6 @@
 [package]
 name = "personal_os"
-version = "1.0.329"
+version = "1.0.330"
 description = "Personal OS desktop workspace built with Tauri v2"
 authors = ["Juan Hu"]
 edition = "2021"
