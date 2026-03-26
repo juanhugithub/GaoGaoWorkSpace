@@ -1,0 +1,13 @@
+{
+  "version": "1.0.329",
+  "notes": "??????????????",
+  "pub_date": "2026-03-26T12:41:50.672Z",
+  "url": "https://gitee.com/juanhu6/gao-gao-work-bench/releases/download/v1.0.329/%E4%B8%AA%E4%BA%BA%E9%AB%98%E7%BB%A9%E6%95%88%E5%B7%A5%E4%BD%9C%E5%8F%B0_1.0.329_x64-setup.nsis.zip",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbGhManUwWDJ1d3dzM0pvWDlCMXEzSjgrVEsyRkZKNWtvTEtrYUNsVzJzK1ViclVRamJjdDN4cGZBQmFhUE1ZTGpIMFRoT0RmTnFJZVFUUitydlVYNlo2RGxsdUI4SUEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0NTI4MDgwCWZpbGU65Liq5Lq66auY57up5pWI5bel5L2c5Y+wXzEuMC4zMjlfeDY0LXNldHVwLm5zaXMuemlwCmlGS1UvQWdtb3BCanBrbFB5dnN3cXJnWk9ZNHNXVUFDKzhsYUNvY1QyTHh6dWRRb3BxWUY0VWhUQ3MxL3lvL041Nm1qaWFBYzlrVmNBZWViaTJ2T0J3PT0K",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://gitee.com/juanhu6/gao-gao-work-bench/releases/download/v1.0.329/%E4%B8%AA%E4%BA%BA%E9%AB%98%E7%BB%A9%E6%95%88%E5%B7%A5%E4%BD%9C%E5%8F%B0_1.0.329_x64-setup.nsis.zip",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbGhManUwWDJ1d3dzM0pvWDlCMXEzSjgrVEsyRkZKNWtvTEtrYUNsVzJzK1ViclVRamJjdDN4cGZBQmFhUE1ZTGpIMFRoT0RmTnFJZVFUUitydlVYNlo2RGxsdUI4SUEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0NTI4MDgwCWZpbGU65Liq5Lq66auY57up5pWI5bel5L2c5Y+wXzEuMC4zMjlfeDY0LXNldHVwLm5zaXMuemlwCmlGS1UvQWdtb3BCanBrbFB5dnN3cXJnWk9ZNHNXVUFDKzhsYUNvY1QyTHh6dWRRb3BxWUY0VWhUQ3MxL3lvL041Nm1qaWFBYzlrVmNBZWViaTJ2T0J3PT0K"
+    }
+  }
+}
