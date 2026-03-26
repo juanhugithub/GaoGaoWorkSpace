@@ -51,7 +51,8 @@ pub fn rename_notebook(
     name: String,
 ) -> Result<NotebookDto, String> {
     let connection = db::open_connection(state.db_path()).map_err(|error| error.to_string())?;
-    rename_notebook_internal(&connection, &notebook_id, name.trim()).map_err(|error| error.to_string())
+    rename_notebook_internal(&connection, &notebook_id, name.trim())
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -209,12 +210,11 @@ fn create_notebook_internal(connection: &Connection, name: &str) -> StorageResul
         return Err("笔记本名称不能为空".into());
     }
 
-    let sort_order = connection
-        .query_row(
-            "SELECT COALESCE(MAX(sort_order), -1) + 1 FROM notebooks",
-            [],
-            |row| row.get::<_, i64>(0),
-        )?;
+    let sort_order = connection.query_row(
+        "SELECT COALESCE(MAX(sort_order), -1) + 1 FROM notebooks",
+        [],
+        |row| row.get::<_, i64>(0),
+    )?;
     let notebook_id = Uuid::new_v4().to_string();
 
     connection.execute(
@@ -311,9 +311,9 @@ fn delete_notebook_internal(
     }
 
     if let Ok(mut watchers) = state.note_watchers().lock() {
-      for note_id in note_ids {
-          watchers.remove(&note_id);
-      }
+        for note_id in note_ids {
+            watchers.remove(&note_id);
+        }
     }
 
     Ok(OperationResultDto {
@@ -353,7 +353,10 @@ fn delete_notes_batch_internal(
     })
 }
 
-fn list_note_ids_by_notebook(connection: &Connection, notebook_id: &str) -> StorageResult<Vec<String>> {
+fn list_note_ids_by_notebook(
+    connection: &Connection,
+    notebook_id: &str,
+) -> StorageResult<Vec<String>> {
     let mut statement = connection.prepare(
         "
         SELECT id

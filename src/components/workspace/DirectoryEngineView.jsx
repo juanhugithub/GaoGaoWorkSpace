@@ -7,8 +7,15 @@ import {
   listDirectoryPresets,
   saveDirectoryPreset,
 } from "../../lib/workspace";
+import {
+  showErrorToast,
+  showSuccessToast,
+  showWarningToast,
+} from "../../lib/toast";
+import { useToast } from "../common/ToastProvider";
 
 function DirectoryEngineView() {
+  const { showToast } = useToast();
   const [treeData, setTreeData] = useState([{ id: "root-1", name: "新建文件夹集", children: [] }]);
   const [targetPath, setTargetPath] = useState("");
   const [presets, setPresets] = useState([]);
@@ -31,7 +38,10 @@ function DirectoryEngineView() {
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          alert(`加载目录预设失败：${String(error)}`);
+          showErrorToast(showToast, {
+            title: "加载目录预设失败",
+            error,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -45,7 +55,7 @@ function DirectoryEngineView() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showToast]);
 
   const addChildNode = (parentId) => {
     const newNode = {
@@ -94,7 +104,10 @@ function DirectoryEngineView() {
 
   const handleSavePreset = async () => {
     if (treeData.length === 0) {
-      alert("当前画布为空，无法保存为预设。");
+      showWarningToast(showToast, {
+        title: "当前画布为空",
+        description: "至少添加一个目录节点后，才能保存为预设。",
+      });
       return;
     }
 
@@ -108,10 +121,16 @@ function DirectoryEngineView() {
       const preset = await saveDirectoryPreset(presetName.trim(), treeData);
       setPresets((current) => [...current, preset]);
       setSelectedPresetId(preset.id);
-      alert("目录预设已保存。");
+      showSuccessToast(showToast, {
+        title: "目录预设已保存",
+        description: `预设“${preset.name}”已加入模板库。`,
+      });
     } catch (error) {
       console.error(error);
-      alert(`保存预设失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "保存预设失败",
+        error,
+      });
     } finally {
       setIsSavingPreset(false);
     }
@@ -143,10 +162,16 @@ function DirectoryEngineView() {
       await deleteDirectoryPreset(selectedPresetId);
       setPresets((current) => current.filter((item) => item.id !== selectedPresetId));
       setSelectedPresetId("");
-      alert("目录预设已删除。");
+      showSuccessToast(showToast, {
+        title: "目录预设已删除",
+        description: `预设“${preset.name}”已从模板库移除。`,
+      });
     } catch (error) {
       console.error(error);
-      alert(`删除预设失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "删除预设失败",
+        error,
+      });
     } finally {
       setIsDeletingPreset(false);
     }
@@ -168,10 +193,17 @@ function DirectoryEngineView() {
     setIsGenerating(true);
     try {
       const result = await generateDirectoryStructure(targetPath, treeData);
-      alert(`目录生成完成。\n目标路径：${result.targetPath}\n创建目录数：${result.createdCount}`);
+      showSuccessToast(showToast, {
+        title: "目录生成完成",
+        description: `目标路径：${result.targetPath}，创建目录数：${result.createdCount}。`,
+        duration: 4800,
+      });
     } catch (error) {
       console.error(error);
-      alert(`目录生成失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "目录生成失败",
+        error,
+      });
     } finally {
       setIsGenerating(false);
     }

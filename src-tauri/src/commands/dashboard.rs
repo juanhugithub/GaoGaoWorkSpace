@@ -63,7 +63,8 @@ pub fn list_dashboard_filter_options(
 
 #[tauri::command]
 pub fn read_excel_headers(path: String) -> Result<Vec<String>, String> {
-    read_excel_headers_internal(Path::new(path.trim()), None, None).map_err(|error| error.to_string())
+    read_excel_headers_internal(Path::new(path.trim()), None, None)
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -413,7 +414,9 @@ fn list_distinct_strings(connection: &Connection, column_name: &str) -> StorageR
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
 
-fn list_data_source_paths_internal(connection: &Connection) -> StorageResult<Vec<(String, String)>> {
+fn list_data_source_paths_internal(
+    connection: &Connection,
+) -> StorageResult<Vec<(String, String)>> {
     let mut statement = connection.prepare(
         "
         SELECT id, file_path
@@ -521,7 +524,10 @@ fn save_source_mapping_internal(
         source_id
     };
 
-    transaction.execute("DELETE FROM column_mappings WHERE source_id = ?1", [&source_id])?;
+    transaction.execute(
+        "DELETE FROM column_mappings WHERE source_id = ?1",
+        [&source_id],
+    )?;
 
     for mapping in mappings {
         let standard_field = mapping.standard_field.trim();
@@ -557,7 +563,8 @@ fn clear_data_source_cache_internal(
         return Err(format!("data source not found: {source_id}").into());
     }
 
-    let deleted_count = connection.execute("DELETE FROM projects WHERE source_id = ?1", [source_id])?;
+    let deleted_count =
+        connection.execute("DELETE FROM projects WHERE source_id = ?1", [source_id])?;
     connection.execute(
         "
         UPDATE data_sources
@@ -675,7 +682,10 @@ fn sync_source_internal(
     })
 }
 
-fn load_source_config_internal(connection: &Connection, source_id: &str) -> StorageResult<SourceConfig> {
+fn load_source_config_internal(
+    connection: &Connection,
+    source_id: &str,
+) -> StorageResult<SourceConfig> {
     let (file_path, sheet_name, header_row_number) = connection
         .query_row(
             "
@@ -754,8 +764,9 @@ fn read_excel_structure_internal(
     let mut sheet_scans = Vec::with_capacity(sheet_names.len());
 
     for sheet_name in &sheet_names {
-        let requested_header_row_number =
-            (preferred_sheet_name == Some(sheet_name.as_str())).then_some(preferred_header_row_number).flatten();
+        let requested_header_row_number = (preferred_sheet_name == Some(sheet_name.as_str()))
+            .then_some(preferred_header_row_number)
+            .flatten();
         let scan = match workbook.worksheet_range(sheet_name) {
             Ok(range) => analyze_sheet(&range, sheet_name, requested_header_row_number),
             Err(error) => ExcelSheetScanDto {
@@ -970,11 +981,17 @@ fn analyze_sheet(
     let headers = visible_headers(&full_headers);
     let preview_rows = collect_preview_rows(range, header_row_index, 5);
     let note = if headers.is_empty() {
-        format!("row {} does not expose usable headers", header_row_index + 1)
+        format!(
+            "row {} does not expose usable headers",
+            header_row_index + 1
+        )
     } else if requested_header_row_number.is_some() {
         format!("using row {} as the header row", header_row_index + 1)
     } else if headers.len() < 2 {
-        format!("row {} is a low-confidence header guess", header_row_index + 1)
+        format!(
+            "row {} is a low-confidence header guess",
+            header_row_index + 1
+        )
     } else {
         format!("row {} is the recommended header row", header_row_index + 1)
     };
@@ -1022,7 +1039,10 @@ fn resolve_selected_sheet_name(
     Ok(sheet_scans[0].name.clone())
 }
 
-fn resolve_header_row_index(range: &Range<Data>, requested_header_row_number: Option<i64>) -> StorageResult<usize> {
+fn resolve_header_row_index(
+    range: &Range<Data>,
+    requested_header_row_number: Option<i64>,
+) -> StorageResult<usize> {
     if let Some(header_row_number) = requested_header_row_number {
         let header_row_number = normalize_header_row_number(header_row_number);
         let header_row_index = header_row_number.saturating_sub(1) as usize;
@@ -1130,14 +1150,21 @@ fn visible_headers(headers: &[String]) -> Vec<String> {
         .collect()
 }
 
-fn collect_preview_rows(range: &Range<Data>, header_row_index: usize, limit: usize) -> Vec<Vec<String>> {
+fn collect_preview_rows(
+    range: &Range<Data>,
+    header_row_index: usize,
+    limit: usize,
+) -> Vec<Vec<String>> {
     range
         .rows()
         .enumerate()
         .skip(header_row_index + 1)
         .filter_map(|(_, row)| {
             let values = trimmed_row_values(row);
-            values.iter().any(|value| !value.is_empty()).then_some(values)
+            values
+                .iter()
+                .any(|value| !value.is_empty())
+                .then_some(values)
         })
         .take(limit)
         .collect()
@@ -1161,12 +1188,19 @@ fn mark_source_sync_failed(
     Ok(())
 }
 
-fn mark_source_sync_failed_by_id(db_path: &Path, source_id: &str, message: &str) -> StorageResult<()> {
+fn mark_source_sync_failed_by_id(
+    db_path: &Path,
+    source_id: &str,
+    message: &str,
+) -> StorageResult<()> {
     let connection = db::open_connection(db_path)?;
     mark_source_sync_failed(&connection, source_id, message)
 }
 
-fn export_projects_excel_internal(projects: &[ProjectDto], output_path: &Path) -> StorageResult<String> {
+fn export_projects_excel_internal(
+    projects: &[ProjectDto],
+    output_path: &Path,
+) -> StorageResult<String> {
     if output_path.as_os_str().is_empty() {
         return Err("output path cannot be empty".into());
     }
@@ -1225,7 +1259,11 @@ fn ensure_dashboard_watcher(
     let watcher = RecommendedWatcher::new(
         move |result: Result<notify::Event, notify::Error>| {
             let Ok(event) = result else {
-                let _ = mark_source_sync_failed_by_id(&db_path, &watched_source_id, "file watch failed");
+                let _ = mark_source_sync_failed_by_id(
+                    &db_path,
+                    &watched_source_id,
+                    "file watch failed",
+                );
                 let _ = app_handle.emit(
                     DASHBOARD_SYNC_ERROR_EVENT,
                     serde_json::json!({
@@ -1237,7 +1275,10 @@ fn ensure_dashboard_watcher(
                 return;
             };
 
-            if !matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_) | EventKind::Any) {
+            if !matches!(
+                event.kind,
+                EventKind::Modify(_) | EventKind::Create(_) | EventKind::Any
+            ) {
                 return;
             }
 
@@ -1300,10 +1341,15 @@ fn ensure_dashboard_watcher(
     Ok(())
 }
 
-fn sync_source_with_retry_by_id(db_path: &Path, source_id: &str) -> StorageResult<DataSourceSyncResultDto> {
+fn sync_source_with_retry_by_id(
+    db_path: &Path,
+    source_id: &str,
+) -> StorageResult<DataSourceSyncResultDto> {
     let mut last_error = None;
     for _ in 0..3 {
-        match db::open_connection(db_path).and_then(|connection| sync_source_internal(&connection, source_id)) {
+        match db::open_connection(db_path)
+            .and_then(|connection| sync_source_internal(&connection, source_id))
+        {
             Ok(result) => return Ok(result),
             Err(error) => {
                 last_error = Some(error.to_string());
@@ -1377,7 +1423,10 @@ fn validate_mapping_headers(
         }
         let normalized = normalize_header(excel_column);
         if duplicated_headers.contains(&normalized) {
-            return Err(format!("mapped header is ambiguous because it appears multiple times: {excel_column}").into());
+            return Err(format!(
+                "mapped header is ambiguous because it appears multiple times: {excel_column}"
+            )
+            .into());
         }
         if !header_map.contains_key(&normalized) {
             return Err(format!("mapped header not found in worksheet: {excel_column}").into());
@@ -1451,7 +1500,11 @@ fn cell_to_string(cell: &Data) -> String {
         }
         Data::Int(value) => value.to_string(),
         Data::Bool(value) => {
-            if *value { "TRUE".to_string() } else { "FALSE".to_string() }
+            if *value {
+                "TRUE".to_string()
+            } else {
+                "FALSE".to_string()
+            }
         }
         Data::DateTime(value) => value.to_string(),
         Data::DateTimeIso(value) => value.to_string(),
@@ -1534,7 +1587,10 @@ fn extract_first_number(value: &str) -> Option<f64> {
             continue;
         }
 
-        let end_idx = chars.get(cursor).map(|(index, _)| *index).unwrap_or(cleaned.len());
+        let end_idx = chars
+            .get(cursor)
+            .map(|(index, _)| *index)
+            .unwrap_or(cleaned.len());
         let token = cleaned[start_idx..end_idx].trim();
         if matches!(token, "" | "+" | "-" | "." | "+." | "-.") {
             continue;
@@ -1543,7 +1599,10 @@ fn extract_first_number(value: &str) -> Option<f64> {
         if let Ok(mut parsed) = token.parse::<f64>() {
             if start_pos > 0
                 && chars[start_pos - 1].1 == '('
-                && chars.get(cursor).map(|(_, char)| *char == ')').unwrap_or(false)
+                && chars
+                    .get(cursor)
+                    .map(|(_, char)| *char == ')')
+                    .unwrap_or(false)
             {
                 parsed = -parsed.abs();
             }
@@ -1555,7 +1614,8 @@ fn extract_first_number(value: &str) -> Option<f64> {
 }
 
 fn row_has_value(row: &[Data]) -> bool {
-    row.iter().any(|cell| !cell_to_string(cell).trim().is_empty())
+    row.iter()
+        .any(|cell| !cell_to_string(cell).trim().is_empty())
 }
 
 fn normalize_header(value: &str) -> String {
@@ -1628,13 +1688,25 @@ fn normalize_district(value: &str) -> String {
     if compact.contains("花桥") {
         return "花桥开发区".to_string();
     }
-    if compact.contains("高新区") || compact.contains("高新技术产业开发区") || compact.contains("高新技术经济开发区") {
+    if compact.contains("高新区")
+        || compact.contains("高新技术产业开发区")
+        || compact.contains("高新技术经济开发区")
+    {
         return "高新区".to_string();
     }
     if compact.contains("开发区") || compact.contains("经济技术开发区") {
         return "开发区".to_string();
     }
-    for name in ["张浦", "周市", "陆家", "巴城", "千灯", "锦溪", "周庄", "淀山湖"] {
+    for name in [
+        "张浦",
+        "周市",
+        "陆家",
+        "巴城",
+        "千灯",
+        "锦溪",
+        "周庄",
+        "淀山湖",
+    ] {
         if compact.contains(&normalize_header(name)) {
             return name.to_string();
         }
@@ -1648,7 +1720,10 @@ fn normalize_project_level(level: &str, category: &str) -> String {
     if level_compact.contains("国家") || category_compact.contains("国家") {
         return "国家级".to_string();
     }
-    if level_compact.contains("江苏") || level_compact.contains("省") || category_compact.contains("江苏") {
+    if level_compact.contains("江苏")
+        || level_compact.contains("省")
+        || category_compact.contains("江苏")
+    {
         return "省级".to_string();
     }
     if level_compact.contains("苏州") || category_compact.contains("苏州") {
@@ -1738,9 +1813,9 @@ mod tests {
     use rust_xlsxwriter::Workbook;
 
     use super::{
-        amount_from_str, normalize_district, normalize_project_level, parse_excel_rows_with_mappings,
-        read_excel_structure_internal, validate_column_mappings, validate_excel_source_path,
-        ColumnMappingDto,
+        amount_from_str, normalize_district, normalize_project_level,
+        parse_excel_rows_with_mappings, read_excel_structure_internal, validate_column_mappings,
+        validate_excel_source_path, ColumnMappingDto,
     };
 
     #[test]
@@ -1748,7 +1823,8 @@ mod tests {
         let temp_dir = unique_temp_dir_path("dashboard-dir");
         fs::create_dir_all(&temp_dir).expect("create temp directory");
 
-        let error = validate_excel_source_path(&temp_dir).expect_err("directory should be rejected");
+        let error =
+            validate_excel_source_path(&temp_dir).expect_err("directory should be rejected");
         assert!(error.to_string().contains("not a file"));
 
         let _ = fs::remove_dir_all(temp_dir);
@@ -1811,8 +1887,8 @@ mod tests {
 
         workbook.save(&workbook_path).expect("save workbook");
 
-        let structure =
-            read_excel_structure_internal(&workbook_path, None, None).expect("read workbook structure");
+        let structure = read_excel_structure_internal(&workbook_path, None, None)
+            .expect("read workbook structure");
         assert_eq!(structure.sheets.len(), 2);
         assert_eq!(structure.selected_sheet, "Summary");
         assert_eq!(structure.selected_header_row_number, 3);
@@ -1834,8 +1910,12 @@ mod tests {
 
         let first = workbook.add_worksheet();
         first.set_name("Main").expect("set main sheet name");
-        first.write_string(0, 0, "项目名称").expect("write main header");
-        first.write_string(1, 0, "主表项目").expect("write main row");
+        first
+            .write_string(0, 0, "项目名称")
+            .expect("write main header");
+        first
+            .write_string(1, 0, "主表项目")
+            .expect("write main row");
 
         let second = workbook.add_worksheet();
         second.set_name("Detail").expect("set detail sheet name");
@@ -1861,7 +1941,10 @@ mod tests {
             .expect("read detail sheet structure");
         assert_eq!(structure.selected_sheet, "Detail");
         assert_eq!(structure.selected_header_row_number, 2);
-        assert_eq!(structure.headers, vec!["项目名称".to_string(), "支持金额".to_string()]);
+        assert_eq!(
+            structure.headers,
+            vec!["项目名称".to_string(), "支持金额".to_string()]
+        );
 
         let _ = fs::remove_file(workbook_path);
     }
@@ -1874,23 +1957,43 @@ mod tests {
         let sheet = workbook.add_worksheet();
         sheet.set_name("Projects").expect("set projects sheet name");
         sheet.write_string(0, 0, "年度").expect("write header year");
-        sheet.write_string(0, 1, "区镇").expect("write header district");
-        sheet.write_string(0, 2, "项目类别").expect("write header category");
-        sheet.write_string(0, 3, "项目名称").expect("write header name");
-        sheet.write_string(0, 4, "企业名称").expect("write header enterprise");
-        sheet.write_string(0, 5, "支持金额").expect("write header amount");
-        sheet.write_string(0, 6, "进度").expect("write header progress");
+        sheet
+            .write_string(0, 1, "区镇")
+            .expect("write header district");
+        sheet
+            .write_string(0, 2, "项目类别")
+            .expect("write header category");
+        sheet
+            .write_string(0, 3, "项目名称")
+            .expect("write header name");
+        sheet
+            .write_string(0, 4, "企业名称")
+            .expect("write header enterprise");
+        sheet
+            .write_string(0, 5, "支持金额")
+            .expect("write header amount");
+        sheet
+            .write_string(0, 6, "进度")
+            .expect("write header progress");
         sheet.write_string(1, 0, "2026").expect("write data year");
-        sheet.write_string(1, 1, "花桥镇").expect("write data district");
+        sheet
+            .write_string(1, 1, "花桥镇")
+            .expect("write data district");
         sheet
             .write_string(1, 2, "苏州市智能制造项目")
             .expect("write data category");
-        sheet.write_string(1, 3, "高端装备项目").expect("write data name");
-        sheet.write_string(1, 4, "示例企业").expect("write data enterprise");
+        sheet
+            .write_string(1, 3, "高端装备项目")
+            .expect("write data name");
+        sheet
+            .write_string(1, 4, "示例企业")
+            .expect("write data enterprise");
         sheet
             .write_string(1, 5, "￥1,230.5 万元")
             .expect("write data amount");
-        sheet.write_string(1, 6, "在建").expect("write data progress");
+        sheet
+            .write_string(1, 6, "在建")
+            .expect("write data progress");
 
         workbook.save(&workbook_path).expect("save workbook");
 
@@ -1904,8 +2007,8 @@ mod tests {
             ("progress", "进度"),
         ]);
 
-        let rows =
-            parse_excel_rows_with_mappings(&workbook_path, "Projects", 1, &mappings).expect("parse rows");
+        let rows = parse_excel_rows_with_mappings(&workbook_path, "Projects", 1, &mappings)
+            .expect("parse rows");
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].district, "花桥开发区");
         assert_eq!(rows[0].level, "苏州市级");
@@ -1927,8 +2030,12 @@ mod tests {
         sheet
             .write_string(0, 1, "项目名称")
             .expect("write header name b");
-        sheet.write_string(1, 0, "项目A").expect("write row value a");
-        sheet.write_string(1, 1, "项目B").expect("write row value b");
+        sheet
+            .write_string(1, 0, "项目A")
+            .expect("write row value a");
+        sheet
+            .write_string(1, 1, "项目B")
+            .expect("write row value b");
 
         workbook.save(&workbook_path).expect("save workbook");
 
@@ -1960,10 +2067,19 @@ mod tests {
 
     #[test]
     fn infers_project_level_from_level_and_category() {
-        assert_eq!(normalize_project_level("", "国家重点研发计划项目"), "国家级");
+        assert_eq!(
+            normalize_project_level("", "国家重点研发计划项目"),
+            "国家级"
+        );
         assert_eq!(normalize_project_level("", "江苏省创新专项"), "省级");
-        assert_eq!(normalize_project_level("", "苏州市科技计划项目"), "苏州市级");
-        assert_eq!(normalize_project_level("", "昆山市科技计划项目"), "昆山本级");
+        assert_eq!(
+            normalize_project_level("", "苏州市科技计划项目"),
+            "苏州市级"
+        );
+        assert_eq!(
+            normalize_project_level("", "昆山市科技计划项目"),
+            "昆山本级"
+        );
         assert_eq!(normalize_project_level("其他", "其他"), "其他");
     }
 

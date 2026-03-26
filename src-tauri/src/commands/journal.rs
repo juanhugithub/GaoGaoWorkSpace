@@ -14,8 +14,8 @@ use crate::{
     storage::{
         db,
         models::{
-            ExportMarkdownResultDto, JournalDetailDto, JournalListItemDto, JournalTaskDto,
-            SaveJournalPayload,
+            ChecklistItemDto, ExportMarkdownResultDto, JournalDetailDto, JournalListItemDto,
+            JournalTaskDto, SaveJournalPayload,
         },
         StorageResult,
     },
@@ -126,6 +126,7 @@ fn fetch_journal_detail(
         return Err(format!("journal not found: {journal_id}").into());
     };
 
+    let checklist_items = load_checklist_items_by_journal(connection, journal_id)?;
     let mut tasks = empty_tasks_map();
     let mut statement = connection.prepare(
         "
@@ -147,10 +148,12 @@ fn fetch_journal_detail(
     )?;
 
     let rows = statement.query_map([journal_id], |row| {
+        let task_id = row.get::<_, String>(0)?;
         Ok((
+            task_id.clone(),
             row.get::<_, String>(1)?,
             JournalTaskDto {
-                id: row.get(0)?,
+                id: task_id.clone(),
                 content: row.get(2)?,
                 contact: row.get(3)?,
                 deadline: row.get(4)?,
@@ -159,12 +162,13 @@ fn fetch_journal_detail(
                 remark: row.get(7)?,
                 carried_over_from_task_id: row.get(8)?,
                 carried_over_from_date: row.get(9)?,
+                checklist_items: checklist_items.get(&task_id).cloned().unwrap_or_default(),
             },
         ))
     })?;
 
     for row in rows {
-        let (category, task) = row?;
+        let (_, category, task) = row?;
         tasks.entry(category).or_default().push(task);
     }
 
@@ -376,6 +380,39 @@ fn save_journal_internal(
                         task.carried_over_from_date,
                     ],
                 )?;
+
+                for (checklist_index, checklist_item) in task
+                    .checklist_items
+                    .iter()
+                    .filter(|item| !item.text.trim().is_empty())
+                    .enumerate()
+                {
+                    let checklist_id = if checklist_item.id.trim().is_empty() {
+                        Uuid::new_v4().to_string()
+                    } else {
+                        checklist_item.id.clone()
+                    };
+
+                    transaction.execute(
+                        "
+                        INSERT INTO journal_task_checklist_items (
+                            id,
+                            task_id,
+                            text,
+                            is_completed,
+                            sort_order
+                        )
+                        VALUES (?1, ?2, ?3, ?4, ?5)
+                        ",
+                        params![
+                            checklist_id,
+                            task_id,
+                            checklist_item.text.trim(),
+                            if checklist_item.is_completed { 1 } else { 0 },
+                            checklist_index as i64,
+                        ],
+                    )?;
+                }
             }
         }
     }
@@ -483,6 +520,50 @@ fn empty_tasks_map() -> BTreeMap<String, Vec<JournalTaskDto>> {
         .iter()
         .map(|category| (category.to_string(), Vec::new()))
         .collect()
+}
+
+fn load_checklist_items_by_journal(
+    connection: &Connection,
+    journal_id: &str,
+) -> StorageResult<HashMap<String, Vec<ChecklistItemDto>>> {
+    let mut statement = connection.prepare(
+        "
+        SELECT
+            journal_task_checklist_items.id,
+            journal_task_checklist_items.task_id,
+            journal_task_checklist_items.text,
+            journal_task_checklist_items.is_completed
+        FROM journal_task_checklist_items
+        INNER JOIN journal_tasks ON journal_tasks.id = journal_task_checklist_items.task_id
+        WHERE journal_tasks.journal_id = ?1
+        ORDER BY
+            journal_task_checklist_items.sort_order ASC,
+            journal_task_checklist_items.created_at ASC,
+            journal_task_checklist_items.id ASC
+        ",
+    )?;
+
+    let rows = statement.query_map([journal_id], |row| {
+        Ok((
+            row.get::<_, String>(1)?,
+            ChecklistItemDto {
+                id: row.get(0)?,
+                text: row.get(2)?,
+                is_completed: row.get::<_, i64>(3)? != 0,
+            },
+        ))
+    })?;
+
+    let mut grouped = HashMap::new();
+    for row in rows {
+        let (task_id, checklist_item) = row?;
+        grouped
+            .entry(task_id)
+            .or_insert_with(Vec::new)
+            .push(checklist_item);
+    }
+
+    Ok(grouped)
 }
 
 fn build_markdown(journals: &[JournalDetailDto]) -> String {
@@ -736,6 +817,7 @@ mod tests {
                 remark: String::from("先拍照留档"),
                 carried_over_from_task_id: None,
                 carried_over_from_date: None,
+                checklist_items: vec![],
             });
 
         let detail = save_journal_internal(
@@ -780,6 +862,7 @@ mod tests {
                 remark: String::from("等主办方回传最终议程"),
                 carried_over_from_task_id: None,
                 carried_over_from_date: None,
+                checklist_items: vec![],
             });
 
         save_journal_internal(
@@ -828,6 +911,7 @@ mod tests {
                 remark: String::new(),
                 carried_over_from_task_id: None,
                 carried_over_from_date: None,
+                checklist_items: vec![],
             });
 
         let markdown = build_markdown(&[JournalDetailDto {

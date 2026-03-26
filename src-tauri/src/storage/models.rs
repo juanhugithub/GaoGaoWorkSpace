@@ -21,6 +21,14 @@ pub struct JournalListItemDto {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ChecklistItemDto {
+    pub id: String,
+    pub text: String,
+    pub is_completed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct JournalTaskDto {
     pub id: String,
     pub content: String,
@@ -33,6 +41,8 @@ pub struct JournalTaskDto {
     pub carried_over_from_task_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub carried_over_from_date: Option<String>,
+    #[serde(default)]
+    pub checklist_items: Vec<ChecklistItemDto>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -114,6 +124,46 @@ pub struct OperationResultDto {
 pub struct GenerateDirectoryResultDto {
     pub target_path: String,
     pub created_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSettingsDto {
+    pub app_lock_enabled: bool,
+    pub has_app_lock_password: bool,
+    pub auto_lock_minutes: i64,
+    pub auto_start_enabled: bool,
+    pub theme_mode: String,
+    pub accent_theme: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveAppSettingsPayload {
+    pub app_lock_enabled: bool,
+    pub auto_lock_minutes: i64,
+    pub auto_start_enabled: bool,
+    pub theme_mode: String,
+    pub accent_theme: String,
+    #[serde(default)]
+    pub password: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeyboardShortcutDto {
+    pub action_id: String,
+    pub accelerator: String,
+    pub default_accelerator: String,
+    pub is_enabled: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveKeyboardShortcutPayload {
+    pub action_id: String,
+    pub accelerator: String,
+    pub is_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

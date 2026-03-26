@@ -2,7 +2,7 @@ use rusqlite::Connection;
 
 use crate::storage::StorageResult;
 
-pub const SCHEMA_VERSION: i64 = 7;
+pub const SCHEMA_VERSION: i64 = 9;
 
 pub fn initialize_schema(connection: &Connection) -> StorageResult<()> {
     create_core_tables(connection)?;
@@ -136,6 +136,39 @@ fn create_core_tables(connection: &Connection) -> StorageResult<()> {
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (journal_id) REFERENCES journals(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS journal_task_checklist_items (
+            id TEXT PRIMARY KEY,
+            task_id TEXT NOT NULL,
+            text TEXT NOT NULL DEFAULT '',
+            is_completed INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (task_id) REFERENCES journal_tasks(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS app_settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            app_lock_enabled INTEGER NOT NULL DEFAULT 0,
+            app_lock_password_hash TEXT,
+            app_lock_password_salt TEXT,
+            auto_lock_minutes INTEGER NOT NULL DEFAULT 0,
+            auto_start_enabled INTEGER NOT NULL DEFAULT 0,
+            theme_mode TEXT NOT NULL DEFAULT 'system',
+            accent_theme TEXT NOT NULL DEFAULT 'classic-blue',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS keyboard_shortcuts (
+            action_id TEXT PRIMARY KEY,
+            accelerator TEXT NOT NULL,
+            default_accelerator TEXT NOT NULL,
+            is_enabled INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         ",
     )?;
@@ -475,6 +508,9 @@ fn create_indexes(connection: &Connection) -> StorageResult<()> {
         CREATE INDEX IF NOT EXISTS idx_column_mappings_source_id
         ON column_mappings(source_id);
 
+        CREATE INDEX IF NOT EXISTS idx_journal_task_checklist_items_task_id
+        ON journal_task_checklist_items(task_id);
+
         DROP INDEX IF EXISTS idx_data_sources_file_path;
 
         CREATE INDEX IF NOT EXISTS idx_data_sources_file_path_sheet_name
@@ -564,11 +600,14 @@ mod tests {
         assert_eq!(
             tables,
             vec![
+                "app_settings".to_string(),
                 "column_mappings".to_string(),
                 "data_sources".to_string(),
                 "directory_presets".to_string(),
+                "journal_task_checklist_items".to_string(),
                 "journal_tasks".to_string(),
                 "journals".to_string(),
+                "keyboard_shortcuts".to_string(),
                 "mapped_items".to_string(),
                 "notebooks".to_string(),
                 "notes".to_string(),

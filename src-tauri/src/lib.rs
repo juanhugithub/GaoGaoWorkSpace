@@ -11,6 +11,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            #[cfg(desktop)]
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             let app_state = AppState::initialize(app.handle())?;
             commands::dashboard::initialize_dashboard_watchers(app.handle(), &app_state)?;
             app.manage(app_state);
@@ -37,6 +39,14 @@ pub fn run() {
             commands::journal::create_journal_for_date,
             commands::journal::save_journal,
             commands::journal::export_journals_markdown,
+            commands::settings::get_app_settings,
+            commands::settings::save_app_settings,
+            commands::settings::list_keyboard_shortcuts,
+            commands::settings::save_keyboard_shortcut,
+            commands::settings::reset_keyboard_shortcut,
+            commands::settings::verify_app_lock_password,
+            commands::settings::vacuum_database,
+            commands::settings::open_log_directory,
             commands::notes::list_notebooks,
             commands::notes::create_notebook,
             commands::notes::rename_notebook,

@@ -3,6 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-bg: #f3f3f3;
+    --app-panel: #ffffff;
+    --app-panel-muted: #f8fafc;
+    --app-panel-soft: #eef2f7;
+    --app-border: #e5e7eb;
+    --app-border-strong: #cbd5e1;
+    --app-text: #111827;
+    --app-text-secondary: #374151;
+    --app-text-muted: #6b7280;
+    --app-text-faint: #9ca3af;
+    --accent-50: #eff6ff;
+    --accent-50a: rgba(239, 246, 255, 0.72);
+    --accent-100: #dbeafe;
+    --accent-200: #bfdbfe;
+    --accent-300: #93c5fd;
+    --accent-400: #60a5fa;
+    --accent-500: #3b82f6;
+    --accent-600: #2563eb;
+    --accent-700: #1d4ed8;
+    --accent-800: #1e40af;
+    --accent-ring: rgba(37, 99, 235, 0.28);
+    --accent-ring-soft: rgba(37, 99, 235, 0.16);
+  }
+
   html,
   body,
   #root {
@@ -11,9 +36,30 @@
   }
 
   body {
-    background: #f3f3f3;
-    color: #111827;
+    background: var(--app-bg);
+    color: var(--app-text);
     font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+    transition:
+      background-color 180ms ease,
+      color 180ms ease;
+  }
+
+  body[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  body[data-theme="dark"] {
+    --app-bg: #0b1220;
+    --app-panel: #0f172a;
+    --app-panel-muted: #111c31;
+    --app-panel-soft: #16233a;
+    --app-border: #243246;
+    --app-border-strong: #334155;
+    --app-text: #f8fafc;
+    --app-text-secondary: #dbe4f0;
+    --app-text-muted: #94a3b8;
+    --app-text-faint: #64748b;
+    color-scheme: dark;
   }
 
   * {
@@ -40,5 +86,194 @@
     background: #cbd5e1;
     border-radius: 9999px;
   }
-}
 
+  body[data-theme="dark"] .scrollbar-thin {
+    scrollbar-color: #334155 transparent;
+  }
+
+  body[data-theme="dark"] .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  .bg-white {
+    background-color: var(--app-panel) !important;
+  }
+
+  .bg-gray-50,
+  .bg-gray-50\/50,
+  .bg-\[\#FAFAFA\],
+  .bg-\[\#F8F9FB\],
+  .bg-\[\#F6F8FB\],
+  .bg-\[\#F3F3F3\] {
+    background-color: var(--app-bg) !important;
+  }
+
+  .bg-gray-100,
+  .bg-gray-100\/50 {
+    background-color: var(--app-panel-soft) !important;
+  }
+
+  .hover\:bg-gray-50:hover {
+    background-color: var(--app-bg) !important;
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: var(--app-panel-soft) !important;
+  }
+
+  .border-gray-100,
+  .border-gray-200,
+  .border-gray-300 {
+    border-color: var(--app-border) !important;
+  }
+
+  .text-gray-900,
+  .text-gray-800 {
+    color: var(--app-text) !important;
+  }
+
+  .text-gray-700,
+  .text-gray-600 {
+    color: var(--app-text-secondary) !important;
+  }
+
+  .text-gray-500 {
+    color: var(--app-text-muted) !important;
+  }
+
+  .text-gray-400 {
+    color: var(--app-text-faint) !important;
+  }
+
+  .placeholder-gray-400::placeholder {
+    color: var(--app-text-faint) !important;
+  }
+
+  .bg-blue-50,
+  .bg-blue-50\/50,
+  .hover\:bg-blue-50:hover,
+  .group:hover .group-hover\:bg-blue-50 {
+    background-color: var(--accent-50) !important;
+  }
+
+  .bg-blue-100,
+  .bg-blue-100\/50 {
+    background-color: var(--accent-100) !important;
+  }
+
+  .bg-blue-600,
+  .bg-indigo-500 {
+    background-color: var(--accent-600) !important;
+  }
+
+  .bg-blue-700,
+  .hover\:bg-blue-700:hover,
+  .hover\:bg-blue-600:hover {
+    background-color: var(--accent-700) !important;
+  }
+
+  .text-blue-800 {
+    color: var(--accent-800) !important;
+  }
+
+  .text-blue-700,
+  .hover\:text-blue-700:hover,
+  .group:hover .group-hover\:text-blue-700 {
+    color: var(--accent-700) !important;
+  }
+
+  .text-blue-600,
+  .text-indigo-500,
+  .hover\:text-blue-600:hover {
+    color: var(--accent-600) !important;
+  }
+
+  .text-blue-500 {
+    color: var(--accent-500) !important;
+  }
+
+  .text-blue-100 {
+    color: var(--accent-100) !important;
+  }
+
+  .text-blue-200 {
+    color: var(--accent-200) !important;
+  }
+
+  .border-blue-100 {
+    border-color: var(--accent-100) !important;
+  }
+
+  .border-blue-200,
+  .hover\:border-blue-200:hover,
+  .border-indigo-200 {
+    border-color: var(--accent-200) !important;
+  }
+
+  .border-blue-300 {
+    border-color: var(--accent-300) !important;
+  }
+
+  .border-blue-400,
+  .hover\:border-blue-400:hover {
+    border-color: var(--accent-400) !important;
+  }
+
+  .border-blue-500,
+  .focus\:border-blue-500:focus {
+    border-color: var(--accent-500) !important;
+  }
+
+  .border-blue-600,
+  .focus\:border-blue-400:focus {
+    border-color: var(--accent-600) !important;
+  }
+
+  .focus\:ring-blue-500:focus,
+  .focus\:ring-blue-500\/20:focus,
+  .focus-within\:ring-blue-500:focus-within {
+    --tw-ring-color: var(--accent-ring) !important;
+  }
+
+  .focus\:ring-blue-100:focus,
+  .focus-within\:ring-blue-100:focus-within {
+    --tw-ring-color: var(--accent-ring-soft) !important;
+  }
+
+  .focus\:bg-white:focus {
+    background-color: var(--app-panel) !important;
+  }
+
+  .hover\:border-gray-300:hover {
+    border-color: var(--app-border-strong) !important;
+  }
+
+  .hover\:text-gray-700:hover {
+    color: var(--app-text-secondary) !important;
+  }
+
+  .shadow-blue-200,
+  .shadow-blue-200\/50,
+  .shadow-indigo-200 {
+    --tw-shadow-color: var(--accent-200) !important;
+    --tw-shadow: var(--tw-shadow-colored) !important;
+  }
+
+  .from-blue-50\/50 {
+    --tw-gradient-from: var(--accent-50a) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+
+  .hover\:bg-blue-50\/60:hover {
+    background-color: var(--accent-50a) !important;
+  }
+
+  .hover\:bg-blue-100\/80:hover {
+    background-color: var(--accent-100) !important;
+  }
+
+  .to-white {
+    --tw-gradient-to: var(--app-panel) var(--tw-gradient-to-position) !important;
+  }
+}

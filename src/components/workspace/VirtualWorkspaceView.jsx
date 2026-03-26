@@ -13,6 +13,11 @@ import {
   removeMappedItem,
   revealPathInSystem,
 } from "../../lib/workspace";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../../lib/toast";
+import { useToast } from "../common/ToastProvider";
 
 const TOOL_SPACE_ID = "vs-dir-engine";
 const ACTIVE_WORKSPACE_STORAGE_KEY = "personal-os.workspace.active-space";
@@ -27,6 +32,7 @@ function getInitialActiveSpace() {
 }
 
 function VirtualWorkspaceView() {
+  const { showToast } = useToast();
   const [spaces, setSpaces] = useState([]);
   const [activeSpace, setActiveSpace] = useState(getInitialActiveSpace);
   const [mappedItems, setMappedItems] = useState([]);
@@ -86,7 +92,10 @@ function VirtualWorkspaceView() {
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          alert(`加载文件空间失败：${String(error)}`);
+          showErrorToast(showToast, {
+            title: "加载文件空间失败",
+            error,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -100,7 +109,7 @@ function VirtualWorkspaceView() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +129,10 @@ function VirtualWorkspaceView() {
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          alert(`加载映射文件失败：${String(error)}`);
+          showErrorToast(showToast, {
+            title: "加载映射文件失败",
+            error,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -134,7 +146,7 @@ function VirtualWorkspaceView() {
     return () => {
       cancelled = true;
     };
-  }, [activeSpace]);
+  }, [activeSpace, showToast]);
 
   const refreshSpaces = async (preferredSpaceId = null) => {
     const items = await listVirtualSpaces();
@@ -167,10 +179,16 @@ function VirtualWorkspaceView() {
     try {
       const space = await createVirtualSpace(name.trim());
       await refreshSpaces(space.id);
-      alert("业务场景已创建。");
+      showSuccessToast(showToast, {
+        title: "业务场景已创建",
+        description: `已创建业务场景“${space.name}”。`,
+      });
     } catch (error) {
       console.error(error);
-      alert(`创建业务场景失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "创建业务场景失败",
+        error,
+      });
     } finally {
       setIsAddingSpace(false);
     }
@@ -187,7 +205,10 @@ function VirtualWorkspaceView() {
       await refreshMappedItems();
     } catch (error) {
       console.error(error);
-      alert(`删除业务场景失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "删除业务场景失败",
+        error,
+      });
     }
   };
 
@@ -212,7 +233,10 @@ function VirtualWorkspaceView() {
       await refreshMappedItems(activeSpaceData.id);
     } catch (error) {
       console.error(error);
-      alert(`添加映射失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "添加映射失败",
+        error,
+      });
     }
   };
 
@@ -231,7 +255,10 @@ function VirtualWorkspaceView() {
       await refreshMappedItems(activeSpace);
     } catch (error) {
       console.error(error);
-      alert(`移除映射失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "移除映射失败",
+        error,
+      });
     }
   };
 
@@ -240,7 +267,10 @@ function VirtualWorkspaceView() {
       await openPathWithSystem(path);
     } catch (error) {
       console.error(error);
-      alert(`打开失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "打开失败",
+        error,
+      });
     }
   };
 
@@ -249,17 +279,27 @@ function VirtualWorkspaceView() {
       await revealPathInSystem(path);
     } catch (error) {
       console.error(error);
-      alert(`打开所在位置失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "打开所在位置失败",
+        error,
+      });
     }
   };
 
   const handleCopyPath = async (path) => {
     try {
       await navigator.clipboard.writeText(path);
-      alert("路径已复制到剪贴板。");
+      showSuccessToast(showToast, {
+        title: "路径已复制到剪贴板",
+        description: path,
+        duration: 4200,
+      });
     } catch (error) {
       console.error(error);
-      alert(`复制路径失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "复制路径失败",
+        error,
+      });
     }
   };
 

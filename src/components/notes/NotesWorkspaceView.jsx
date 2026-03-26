@@ -31,8 +31,14 @@ import {
   refreshNote,
   renameNotebook,
 } from "../../lib/notes";
+import {
+  showErrorToast,
+  showWarningToast,
+} from "../../lib/toast";
+import { useToast } from "../common/ToastProvider";
 
 function NotesWorkspaceView() {
+  const { showToast } = useToast();
   const [notebooks, setNotebooks] = useState([]);
   const [notes, setNotes] = useState([]);
   const [activeNotebook, setActiveNotebook] = useState(null);
@@ -78,7 +84,10 @@ function NotesWorkspaceView() {
       });
     } catch (error) {
       console.error(error);
-      alert(`加载笔记本失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "加载笔记本失败",
+        error,
+      });
     } finally {
       setIsLoadingNotebooks(false);
     }
@@ -106,7 +115,10 @@ function NotesWorkspaceView() {
       });
     } catch (error) {
       console.error(error);
-      alert(`加载笔记列表失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "加载笔记列表失败",
+        error,
+      });
     } finally {
       setIsLoadingNotes(false);
     }
@@ -160,7 +172,10 @@ function NotesWorkspaceView() {
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          alert(`加载脑图详情失败：${String(error)}`);
+          showErrorToast(showToast, {
+            title: "加载脑图详情失败",
+            error,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -174,7 +189,7 @@ function NotesWorkspaceView() {
     return () => {
       cancelled = true;
     };
-  }, [activeNote]);
+  }, [activeNote, showToast]);
 
   useEffect(() => {
     let unlistenUpdated;
@@ -189,7 +204,10 @@ function NotesWorkspaceView() {
       unlistenError = await listen(NOTES_SYNC_ERROR_EVENT, (event) => {
         const payload = event.payload;
         if (payload?.message) {
-          alert(`脑图同步失败：${payload.message}`);
+          showErrorToast(showToast, {
+            title: "脑图同步失败",
+            description: payload.message,
+          });
         }
       });
     }
@@ -204,7 +222,7 @@ function NotesWorkspaceView() {
         unlistenError();
       }
     };
-  }, []);
+  }, [showToast]);
 
   async function handleCreateNotebook() {
     const name = window.prompt("请输入新笔记本名称：", "");
@@ -218,7 +236,10 @@ function NotesWorkspaceView() {
       await loadNotebookList(notebook.id);
     } catch (error) {
       console.error(error);
-      alert(`新建笔记本失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "新建笔记本失败",
+        error,
+      });
     } finally {
       setIsCreatingNotebook(false);
     }
@@ -236,7 +257,10 @@ function NotesWorkspaceView() {
       await loadNotebookList(updated.id);
     } catch (error) {
       console.error(error);
-      alert(`重命名笔记本失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "重命名笔记本失败",
+        error,
+      });
     } finally {
       setMutatingNotebookId("");
     }
@@ -244,7 +268,10 @@ function NotesWorkspaceView() {
 
   async function handleDeleteNotebook(notebook) {
     if (notebooks.length <= 1) {
-      alert("请至少保留一个笔记本。");
+      showWarningToast(showToast, {
+        title: "无法删除最后一个笔记本",
+        description: "请至少保留一个笔记本。",
+      });
       return;
     }
 
@@ -263,7 +290,10 @@ function NotesWorkspaceView() {
       await loadNotebookList(fallbackNotebookId);
     } catch (error) {
       console.error(error);
-      alert(`删除笔记本失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "删除笔记本失败",
+        error,
+      });
     } finally {
       setMutatingNotebookId("");
     }
@@ -290,7 +320,10 @@ function NotesWorkspaceView() {
       await loadNotebookNotes(activeNotebook, detail.id);
     } catch (error) {
       console.error(error);
-      alert(`导入 Xmind 失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "导入 Xmind 失败",
+        error,
+      });
     } finally {
       setIsImporting(false);
     }
@@ -317,7 +350,10 @@ function NotesWorkspaceView() {
       await loadNotebookNotes(activeNotebook);
     } catch (error) {
       console.error(error);
-      alert(`删除笔记失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "删除笔记失败",
+        error,
+      });
     } finally {
       setIsDeletingNotes(false);
     }
@@ -358,7 +394,10 @@ function NotesWorkspaceView() {
       mergeNoteDetail(detail);
     } catch (error) {
       console.error(error);
-      alert(`手动同步失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "手动同步失败",
+        error,
+      });
     } finally {
       setIsSyncing(false);
     }
@@ -373,7 +412,10 @@ function NotesWorkspaceView() {
       await openNoteInXmind(activeNote);
     } catch (error) {
       console.error(error);
-      alert(`打开 Xmind 失败：${String(error)}`);
+      showErrorToast(showToast, {
+        title: "打开 Xmind 失败",
+        error,
+      });
     }
   }
 
