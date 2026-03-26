@@ -1,0 +1,13 @@
+{
+  "version": "1.0.330",
+  "notes": "修复设置页版本显示、刷新误锁定，并补充启动更新提醒",
+  "pub_date": "2026-03-26T13:23:09.734Z",
+  "url": "https://gitee.com/juanhu6/gao-gao-work-bench/releases/download/v1.0.330/%E4%B8%AA%E4%BA%BA%E9%AB%98%E7%BB%A9%E6%95%88%E5%B7%A5%E4%BD%9C%E5%8F%B0_1.0.330_x64-setup.nsis.zip",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbGhManUwWDJ1dy9IemJDOXlxenY0b1lmYjY2ajYvM3Qxd3RDSEkrZkszTUhCZndrdmYrL2JyNWtEd1hlVU5iNVE5VHdkai9pUTErYlc4bG1UUHVFb3FRQjNNMGdlZ2c4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0NTMxMzgzCWZpbGU65Liq5Lq66auY57up5pWI5bel5L2c5Y+wXzEuMC4zMzBfeDY0LXNldHVwLm5zaXMuemlwCmg1U3hldXVveUNlWnJPMHhSR3NtRUk0c3BlNFl1eXdvNUx2Q1VjelkrUmpNTjY5T3c2d3J0UXF0b0FDOU5xdEk2THpOeGwyOGY3ck5PalJZSWJWWkJBPT0K",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://gitee.com/juanhu6/gao-gao-work-bench/releases/download/v1.0.330/%E4%B8%AA%E4%BA%BA%E9%AB%98%E7%BB%A9%E6%95%88%E5%B7%A5%E4%BD%9C%E5%8F%B0_1.0.330_x64-setup.nsis.zip",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRbGhManUwWDJ1dy9IemJDOXlxenY0b1lmYjY2ajYvM3Qxd3RDSEkrZkszTUhCZndrdmYrL2JyNWtEd1hlVU5iNVE5VHdkai9pUTErYlc4bG1UUHVFb3FRQjNNMGdlZ2c4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0NTMxMzgzCWZpbGU65Liq5Lq66auY57up5pWI5bel5L2c5Y+wXzEuMC4zMzBfeDY0LXNldHVwLm5zaXMuemlwCmg1U3hldXVveUNlWnJPMHhSR3NtRUk0c3BlNFl1eXdvNUx2Q1VjelkrUmpNTjY5T3c2d3J0UXF0b0FDOU5xdEk2THpOeGwyOGY3ck5PalJZSWJWWkJBPT0K"
+    }
+  }
+}
